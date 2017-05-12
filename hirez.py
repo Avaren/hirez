@@ -8,16 +8,34 @@ import aiohttp
 
 ENDPOINTS = {
     'smite-pc': 'http://api.smitegame.com/smiteapi.svc',
-    'smite-xbl': '',
-    'smite-psn': '',
-    'paladins-pc': '',
+    'smite-xbl': 'http://api.xbox.smitegame.com/smiteapi.svc',
+    'smite-psn': 'http://api.ps4.smitegame.com/smiteapi.svc',
+    'paladins-pc': 'http://api.paladins.com/paladinsapi.svc',
 }
 
+HiRezSession = collections.namedtuple('HiRezSession', 'id timestamp')
 
-HirezSession = collections.namedtuple('HirezSession', 'id timestamp')
+
+class PlayerSummary:
+    def __repr__(self):
+        return str(self.__dict__)
 
 
-class HirezAPI:
+class PlayerStatus:
+    def __repr__(self):
+        return str(self.__dict__)
+
+
+class Player(PlayerSummary):
+    pass
+
+
+class Team:
+    def __repr__(self):
+        return str(self.__dict__)
+
+
+class HiRezAPI:
     def __init__(self, endpoint: str, dev_id: str, auth_key: str, loop: asyncio.AbstractEventLoop = None,
                  sess: aiohttp.ClientSession = None):
         self.endpoint = ENDPOINTS[endpoint]
@@ -35,7 +53,7 @@ class HirezAPI:
                 # Refresh session
                 result = await self._make_request('createsession', with_session=False)
                 if result['ret_msg'] == 'Approved':
-                    self.hirez_session = HirezSession(result['session_id'], now)
+                    self.hirez_session = HiRezSession(result['session_id'], now)
                     return result
                 else:
                     raise Exception('Failed to create session: {}'.format(result['ret_msg']))
@@ -50,11 +68,15 @@ class HirezAPI:
 
     async def player(self, player_id):
         print(await self.auth())
-        return await self._make_request('getplayer', player_id)
+        data = await self._make_request('getplayer', player_id)
+        if data:
+            return create_obj(Player, data[0])
+        else:
+            raise Exception('Player {} not found.'.format(player_id))
 
     async def team(self, team_id):
         print(await self.auth())
-        return await self._make_request('getteamdetails', team_id)
+        return create_obj(Team, await self._make_request('getteamdetails', team_id))
 
     async def team_players(self, team_id):
         print(await self.auth())
@@ -62,7 +84,7 @@ class HirezAPI:
 
     async def player_status(self, player_id):
         print(await self.auth())
-        return await self._make_request('getplayerstatus', player_id)
+        return create_obj(PlayerStatus, await self._make_request('getplayerstatus', player_id))
 
     async def _make_request(self, method: str, *args, with_session=True):
         timestamp = datetime.datetime.utcnow()
@@ -82,3 +104,9 @@ class HirezAPI:
     def _signature(self, method: str, timestamp: datetime.datetime):
         sig_str = '{0.dev_id}{1}{0.auth_key}{2:%Y%m%d%H%M%S}'.format(self, method, timestamp)
         return hashlib.md5(sig_str.encode()).hexdigest()
+
+
+def create_obj(cls, data):
+    obj = cls()
+    obj.__dict__.update({k.lower(): v for k, v in data.items()})
+    return obj
