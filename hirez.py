@@ -35,6 +35,11 @@ class Team:
         return str(self.__dict__)
 
 
+class Match:
+    def __repr__(self):
+        return str(self.__dict__)
+
+
 class HiRezAPI:
     def __init__(self, endpoint: str, dev_id: str, auth_key: str, loop: asyncio.AbstractEventLoop = None,
                  sess: aiohttp.ClientSession = None):
@@ -85,6 +90,10 @@ class HiRezAPI:
     async def player_status(self, player_id):
         print(await self.auth())
         return create_obj(PlayerStatus, await self._make_request('getplayerstatus', player_id))
+
+    async def match_history(self, player_id, limit):
+        print(await self.auth())
+        return [create_obj(Match, data) for data in (await self._make_request('getmatchhistory', player_id))[:limit]]
 
     async def _make_request(self, method: str, *args, with_session=True):
         timestamp = datetime.datetime.utcnow()
