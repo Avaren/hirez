@@ -11,6 +11,8 @@ ENDPOINTS = {
     'smite-xbl': 'http://api.xbox.smitegame.com/smiteapi.svc',
     'smite-psn': 'http://api.ps4.smitegame.com/smiteapi.svc',
     'paladins-pc': 'http://api.paladins.com/paladinsapi.svc',
+    'paladins-psn': 'http://api.ps4.paladins.com/paladinsapi.svc',
+    'paladins-xbl': 'http://api.xbox.paladins.com/paladinsapi.svc',
 }
 
 HiRezSession = collections.namedtuple('HiRezSession', 'id timestamp')
