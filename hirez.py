@@ -42,6 +42,9 @@ class Match:
         return str(self.__dict__)
 
 
+class NotFound(Exception):
+    pass
+
 class HiRezAPI:
     def __init__(self, endpoint: str, dev_id: str, auth_key: str, loop: asyncio.AbstractEventLoop = None,
                  sess: aiohttp.ClientSession = None):
@@ -79,7 +82,7 @@ class HiRezAPI:
         if data:
             return create_obj(Player, data[0])
         else:
-            raise Exception('Player {} not found.'.format(player_id))
+            raise NotFound('Player {} not found.'.format(player_id))
 
     async def team(self, team_id):
         print(await self.auth())
